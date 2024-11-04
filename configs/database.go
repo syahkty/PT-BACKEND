@@ -1,14 +1,34 @@
 package configs
 
 import (
-    "library_api/internal/entity"
+	"fmt"
+	"library_api/internal/entity"
+	"os"
 
-    "gorm.io/driver/mysql"
-    "gorm.io/gorm"
+	"github.com/joho/godotenv"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 func ConnectDatabase() (*gorm.DB, error) {
-    dsn := "root:@tcp(127.0.0.1:3306)/library_db?charset=utf8mb4&parseTime=True&loc=Local"
+    // Memuat file .env
+    err := godotenv.Load()
+    if err != nil {
+        return nil, fmt.Errorf("gagal memuat file .env: %v", err)
+    }
+
+    // Membuat DSN dari variabel lingkungan
+    dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=%s&parseTime=%s&loc=%s",
+        os.Getenv("DB_USER"),
+        os.Getenv("DB_PASSWORD"),
+        os.Getenv("DB_HOST"),
+        os.Getenv("DB_PORT"),
+        os.Getenv("DB_NAME"),
+        os.Getenv("DB_CHARSET"),
+        os.Getenv("DB_PARSE_TIME"),
+        os.Getenv("DB_LOC"),
+    )
+
     db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
     if err != nil {
         return nil, err
@@ -18,4 +38,4 @@ func ConnectDatabase() (*gorm.DB, error) {
     db.AutoMigrate(&entity.User{}, &entity.Book{}, &entity.Borrowing{})
 
     return db, nil
-}   
+}
